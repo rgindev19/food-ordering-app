@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+*/node_modules/
+
+# Environment Variables
+.env
+*/.env
+
+# Build outputs & Logs
+dist/
+build/
+*.log
+npm-debug.log*
+
+# Uploaded media assets (optional: keep repo light)
+server/uploads/*
+!server/uploads/.gitkeep

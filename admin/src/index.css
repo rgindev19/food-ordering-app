@@ -1,7 +1,99 @@
 @import "tailwindcss";
 
 @layer base {
-  body {
-    @apply bg-zinc-950 text-zinc-100 antialiased;
+  :root {
+    --neo-bg: #FAF6EF;
+    --neo-ink: #121212;
+    --neo-orange: #FF5722;
+    --neo-yellow: #FFE600;
+    --neo-green: #22C55E;
+    --neo-blue: #38BDF8;
+    --neo-purple: #C084FC;
+    --neo-pink: #FF6584;
   }
+
+  body {
+    background-color: #FAF6EF;
+    color: #121212;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection {
+    background: #FFE600;
+    color: #121212;
+  }
+}
+
+/* Neobrutalism Display Font */
+.neo-font-display {
+  font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+}
+
+/* Neobrutalism Hard Shadows */
+.neo-shadow-xs {
+  box-shadow: 2px 2px 0px #121212;
+}
+
+.neo-shadow-sm {
+  box-shadow: 3px 3px 0px #121212;
+}
+
+.neo-shadow {
+  box-shadow: 4px 4px 0px #121212;
+}
+
+.neo-shadow-md {
+  box-shadow: 6px 6px 0px #121212;
+}
+
+.neo-shadow-lg {
+  box-shadow: 8px 8px 0px #121212;
+}
+
+.neo-shadow-xl {
+  box-shadow: 10px 10px 0px #121212;
+}
+
+/* Tactile Brutalist Action Buttons */
+.neo-btn {
+  border: 2.5px solid #121212;
+  box-shadow: 4px 4px 0px #121212;
+  transition: all 0.12s ease-in-out;
+  cursor: pointer;
+}
+
+.neo-btn:hover:not(:disabled) {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px #121212;
+}
+
+.neo-btn:active:not(:disabled) {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #121212;
+}
+
+/* Tactile Brutalist Cards */
+.neo-card {
+  border: 3px solid #121212;
+  box-shadow: 5px 5px 0px #121212;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.neo-card:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 7px 7px 0px #121212;
+}
+
+/* Input Fields */
+.neo-input {
+  border: 2.5px solid #121212;
+  box-shadow: 3px 3px 0px #121212;
+  transition: all 0.12s ease;
+}
+
+.neo-input:focus {
+  outline: none;
+  box-shadow: 5px 5px 0px #121212;
+  transform: translate(-1px, -1px);
 }

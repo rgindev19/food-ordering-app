@@ -16,16 +16,19 @@ import {
   Trash2,
   X,
   Sparkles,
-  Film
+  Film,
+  DollarSign,
+  Flame,
+  AlertCircle
 } from 'lucide-react';
 
 const API_BASE = 'http://localhost:5000';
 
 const STATUS_CONFIG = {
-  Pending: { bg: 'bg-amber-500/10', text: 'text-amber-400', border: 'border-amber-500/20', icon: Clock },
-  Preparing: { bg: 'bg-blue-500/10', text: 'text-blue-400', border: 'border-blue-500/20', icon: ChefHat },
-  'Out for Delivery': { bg: 'bg-purple-500/10', text: 'text-purple-400', border: 'border-purple-500/20', icon: Bike },
-  Delivered: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/20', icon: CheckCircle2 }
+  Pending: { bg: 'bg-[#FFE600]', text: 'text-black', border: 'border-black', icon: Clock },
+  Preparing: { bg: 'bg-[#38BDF8]', text: 'text-black', border: 'border-black', icon: ChefHat },
+  'Out for Delivery': { bg: 'bg-[#C084FC]', text: 'text-black', border: 'border-black', icon: Bike },
+  Delivered: { bg: 'bg-[#22C55E]', text: 'text-black', border: 'border-black', icon: CheckCircle2 }
 };
 
 const CATEGORIES = ['Signature Bowls', 'Burgers', 'Pasta', 'Drinks', 'Desserts'];
@@ -267,88 +270,147 @@ export default function AdminApp() {
   const activeOrdersCount = orders.filter((o) => o.status !== 'Delivered' && o.status !== 'Cancelled').length;
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans">
-      {/* Top Header */}
-      <header className="sticky top-0 z-20 bg-zinc-900/90 backdrop-blur border-b border-zinc-800 px-8 py-4 flex items-center justify-between">
-        <div className="flex items-center gap-6">
+    <div className="min-h-screen bg-[#FAF6EF] text-[#121212] font-sans selection:bg-[#FFE600] selection:text-black">
+      
+      {/* NEOBRUTALIST TOP HEADER */}
+      <header className="sticky top-0 z-30 bg-[#FAF6EF]/95 backdrop-blur border-b-[3.5px] border-black px-6 sm:px-8 py-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-[0_4px_0_#000]">
+        
+        {/* Brand & Terminal Identifier */}
+        <div className="flex items-center gap-4 w-full md:w-auto justify-between md:justify-start">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-500/20 border border-orange-500/40 rounded-xl text-orange-400">
-              <Package className="w-6 h-6" />
+            <div className="p-2.5 bg-[#FFE600] border-2 border-black rounded-xl shadow-[3px_3px_0_#000] rotate-[-2deg]">
+              <Package className="w-6 h-6 text-black stroke-[2.5]" />
             </div>
             <div>
-              <h1 className="text-lg font-bold">Admin Operations</h1>
-              <p className="text-xs text-zinc-400">Kitchen & Promotion Terminal</p>
+              <h1 className="text-xl font-black tracking-tight text-black neo-font-display flex items-center gap-1.5">
+                SAVOR<span className="bg-[#FF5722] text-white px-2 py-0.5 rounded-lg border-2 border-black text-sm rotate-[1deg]">ADMIN</span>
+              </h1>
+              <p className="text-[11px] font-bold text-zinc-600 uppercase tracking-wider">
+                Kitchen & Operations Terminal
+              </p>
             </div>
           </div>
 
-          <div className="flex bg-zinc-800/80 p-1 rounded-xl border border-zinc-700/60">
+          {activeTab === 'orders' && (
             <button
-              onClick={() => setActiveTab('orders')}
-              className={`flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-lg transition ${
-                activeTab === 'orders' ? 'bg-orange-500 text-white shadow' : 'text-zinc-400 hover:text-zinc-200'
-              }`}
+              onClick={fetchOrders}
+              className="md:hidden flex items-center gap-1.5 px-3 py-2 bg-[#FFE600] text-black font-black text-xs uppercase rounded-xl border-2 border-black neo-btn"
             >
-              <Clock className="w-3.5 h-3.5" />
-              Live Orders
+              <RefreshCw className={`w-3.5 h-3.5 ${loadingOrders ? 'animate-spin' : ''}`} />
+              Refresh
             </button>
-            <button
-              onClick={() => setActiveTab('catalog')}
-              className={`flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-lg transition ${
-                activeTab === 'catalog' ? 'bg-orange-500 text-white shadow' : 'text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              <UtensilsCrossed className="w-3.5 h-3.5" />
-              Menu & Products
-            </button>
-            <button
-              onClick={() => setActiveTab('promos')}
-              className={`flex items-center gap-2 px-4 py-1.5 text-xs font-semibold rounded-lg transition ${
-                activeTab === 'promos' ? 'bg-orange-500 text-white shadow' : 'text-zinc-400 hover:text-zinc-200'
-              }`}
-            >
-              <Sparkles className="w-3.5 h-3.5" />
-              Promotions & Ads
-            </button>
-          </div>
+          )}
         </div>
 
+        {/* Tab Switcher Controls */}
+        <div className="flex bg-white p-1.5 rounded-xl border-[2.5px] border-black shadow-[3px_3px_0_#000] overflow-x-auto max-w-full">
+          <button
+            onClick={() => setActiveTab('orders')}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-black uppercase rounded-lg transition cursor-pointer ${
+              activeTab === 'orders'
+                ? 'bg-[#FFE600] text-black border-2 border-black shadow-[2px_2px_0_#000]'
+                : 'text-zinc-600 hover:text-black hover:bg-zinc-100 border-2 border-transparent'
+            }`}
+          >
+            <Clock className="w-4 h-4 stroke-[2.5]" />
+            <span>Live Orders</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('catalog')}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-black uppercase rounded-lg transition cursor-pointer ${
+              activeTab === 'catalog'
+                ? 'bg-[#FFE600] text-black border-2 border-black shadow-[2px_2px_0_#000]'
+                : 'text-zinc-600 hover:text-black hover:bg-zinc-100 border-2 border-transparent'
+            }`}
+          >
+            <UtensilsCrossed className="w-4 h-4 stroke-[2.5]" />
+            <span>Menu Catalog</span>
+          </button>
+
+          <button
+            onClick={() => setActiveTab('promos')}
+            className={`flex items-center gap-2 px-4 py-2 text-xs font-black uppercase rounded-lg transition cursor-pointer ${
+              activeTab === 'promos'
+                ? 'bg-[#FFE600] text-black border-2 border-black shadow-[2px_2px_0_#000]'
+                : 'text-zinc-600 hover:text-black hover:bg-zinc-100 border-2 border-transparent'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 stroke-[2.5]" />
+            <span>Promotions & Ads</span>
+          </button>
+        </div>
+
+        {/* Desktop Refresh Button */}
         {activeTab === 'orders' && (
           <button
             onClick={fetchOrders}
-            className="flex items-center gap-2 px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-sm font-medium rounded-xl transition"
+            className="hidden md:flex items-center gap-2 px-4 py-2.5 bg-[#FFE600] hover:bg-[#FFD500] text-black font-black text-xs uppercase rounded-xl border-[2.5px] border-black neo-btn"
           >
-            <RefreshCw className={`w-4 h-4 ${loadingOrders ? 'animate-spin' : ''}`} />
-            Refresh
+            <RefreshCw className={`w-4 h-4 stroke-[2.5] ${loadingOrders ? 'animate-spin' : ''}`} />
+            Sync Orders
           </button>
         )}
       </header>
 
-      <main className="max-w-7xl mx-auto px-8 py-8">
-        {/* TAB 1: LIVE ORDERS */}
+      {/* MAIN ADMIN CONTENT */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-8">
+        
+        {/* TAB 1: LIVE ORDERS DASHBOARD */}
         {activeTab === 'orders' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-5 bg-zinc-900 border border-zinc-800 rounded-2xl">
-                <p className="text-xs text-zinc-400 font-medium">Active Kitchen Orders</p>
-                <p className="text-3xl font-bold mt-2 text-orange-400">{activeOrdersCount}</p>
+            
+            {/* KPI STAT CARDS */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              
+              {/* Active Kitchen Orders */}
+              <div className="p-6 bg-[#FFE600] border-[3px] border-black rounded-2xl neo-card">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-black uppercase tracking-wider text-black">Active Kitchen Orders</p>
+                  <span className="p-1.5 bg-black text-[#FFE600] rounded-lg">
+                    <ChefHat className="w-4 h-4" />
+                  </span>
+                </div>
+                <p className="text-4xl font-black mt-3 text-black neo-font-display">{activeOrdersCount}</p>
+                <p className="text-[11px] font-bold text-zinc-800 mt-1">Pending & in preparation</p>
               </div>
-              <div className="p-5 bg-zinc-900 border border-zinc-800 rounded-2xl">
-                <p className="text-xs text-zinc-400 font-medium">Total Orders Placed</p>
-                <p className="text-3xl font-bold mt-2 text-zinc-100">{orders.length}</p>
+
+              {/* Total Orders Placed */}
+              <div className="p-6 bg-[#C084FC] border-[3px] border-black rounded-2xl neo-card">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-black uppercase tracking-wider text-black">Total Orders Placed</p>
+                  <span className="p-1.5 bg-black text-[#C084FC] rounded-lg">
+                    <Package className="w-4 h-4" />
+                  </span>
+                </div>
+                <p className="text-4xl font-black mt-3 text-black neo-font-display">{orders.length}</p>
+                <p className="text-[11px] font-bold text-zinc-800 mt-1">Lifetime customer orders</p>
               </div>
-              <div className="p-5 bg-zinc-900 border border-zinc-800 rounded-2xl">
-                <p className="text-xs text-zinc-400 font-medium">Gross Revenue</p>
-                <p className="text-3xl font-bold mt-2 text-emerald-400">${totalRevenue.toFixed(2)}</p>
+
+              {/* Gross Revenue */}
+              <div className="p-6 bg-[#22C55E] border-[3px] border-black rounded-2xl neo-card">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-black uppercase tracking-wider text-black">Gross Revenue</p>
+                  <span className="p-1.5 bg-black text-[#22C55E] rounded-lg">
+                    <DollarSign className="w-4 h-4" />
+                  </span>
+                </div>
+                <p className="text-4xl font-black mt-3 text-black neo-font-display">${totalRevenue.toFixed(2)}</p>
+                <p className="text-[11px] font-bold text-zinc-800 mt-1">Total processed volume</p>
               </div>
             </div>
 
-            <div className="flex gap-2 pb-2 overflow-x-auto">
+            {/* STATUS FILTER PILLS */}
+            <div className="flex items-center gap-2.5 pb-2 overflow-x-auto pt-2">
+              <span className="text-xs font-black uppercase text-zinc-500 mr-1 hidden sm:inline">Filter:</span>
               {['All', 'Pending', 'Preparing', 'Out for Delivery', 'Delivered'].map((filter) => (
                 <button
                   key={filter}
                   onClick={() => setActiveFilter(filter)}
-                  className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${
-                    activeFilter === filter ? 'bg-zinc-100 text-zinc-950 shadow-md' : 'bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200'
+                  className={`px-4 py-2 rounded-xl text-xs font-black uppercase tracking-wide border-[2.5px] border-black transition whitespace-nowrap cursor-pointer ${
+                    activeFilter === filter
+                      ? 'bg-black text-white shadow-[3px_3px_0_#FFE600] -translate-y-0.5'
+                      : 'bg-white hover:bg-zinc-100 text-black hover:shadow-[2px_2px_0_#000]'
                   }`}
                 >
                   {filter}
@@ -356,56 +418,79 @@ export default function AdminApp() {
               ))}
             </div>
 
-            <div className="bg-zinc-900 border border-zinc-800 rounded-2xl overflow-hidden">
+            {/* ORDERS TABLE */}
+            <div className="bg-white border-[3.5px] border-black rounded-2xl overflow-hidden neo-shadow-md">
               {loadingOrders && orders.length === 0 ? (
-                <div className="text-center py-20 text-zinc-500">Loading incoming orders...</div>
+                <div className="text-center py-20 font-black text-sm">Loading live orders...</div>
               ) : filteredOrders.length === 0 ? (
-                <div className="text-center py-20 text-zinc-500">No orders match this filter.</div>
+                <div className="text-center py-20 text-zinc-600 font-bold text-sm">
+                  No orders match this status filter.
+                </div>
               ) : (
                 <div className="overflow-x-auto">
                   <table className="w-full text-left border-collapse">
                     <thead>
-                      <tr className="border-b border-zinc-800 text-xs font-semibold text-zinc-400 bg-zinc-900/50">
+                      <tr className="border-b-[3px] border-black text-xs font-black uppercase tracking-wider text-black bg-[#FFE600]">
                         <th className="py-4 px-6">Order ID & Time</th>
                         <th className="py-4 px-6">Items Breakdown</th>
                         <th className="py-4 px-6">Total Amount</th>
-                        <th className="py-4 px-6">Status</th>
+                        <th className="py-4 px-6">Current Status</th>
                         <th className="py-4 px-6 text-right">Quick Action</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-zinc-800/60 text-sm">
+                    <tbody className="divide-y-2 divide-zinc-200 text-sm">
                       {filteredOrders.map((order) => {
                         const statusInfo = STATUS_CONFIG[order.status] || STATUS_CONFIG.Pending;
                         const StatusIcon = statusInfo.icon;
                         return (
-                          <tr key={order._id} className="hover:bg-zinc-800/30 transition">
+                          <tr key={order._id} className="hover:bg-[#FAF6EF] transition">
+                            
+                            {/* ID and Time */}
                             <td className="py-4 px-6">
-                              <div className="font-mono text-xs text-orange-400">#{order._id.slice(-6).toUpperCase()}</div>
-                              <div className="text-xs text-zinc-500 mt-1">
+                              <div className="font-mono text-xs font-black bg-[#FAF6EF] border-2 border-black px-2 py-0.5 rounded-md inline-block shadow-[1px_1px_0_#000]">
+                                #{order._id.slice(-6).toUpperCase()}
+                              </div>
+                              <div className="text-xs font-bold text-zinc-600 mt-1.5 flex items-center gap-1">
+                                <Clock className="w-3 h-3" />
                                 {new Date(order.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                               </div>
                             </td>
+
+                            {/* Items Breakdown */}
                             <td className="py-4 px-6 max-w-sm">
                               <div className="space-y-1">
                                 {order.items?.map((item, idx) => (
-                                  <div key={idx} className="text-xs text-zinc-300">
-                                    <span className="font-bold text-zinc-100">{item.quantity}x</span> {item.name}
+                                  <div key={idx} className="text-xs font-bold text-zinc-800 flex items-center gap-1.5">
+                                    <span className="bg-[#FFE600] border border-black text-black px-1.5 py-0.2 rounded font-black text-[11px]">
+                                      {item.quantity}x
+                                    </span>
+                                    <span>{item.name}</span>
                                   </div>
                                 ))}
                               </div>
                             </td>
-                            <td className="py-4 px-6 font-bold text-zinc-100">${order.total?.toFixed(2)}</td>
+
+                            {/* Total Amount */}
                             <td className="py-4 px-6">
-                              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${statusInfo.bg} ${statusInfo.text} ${statusInfo.border}`}>
-                                <StatusIcon className="w-3.5 h-3.5" />
+                              <span className="font-black text-base text-black bg-[#22C55E]/20 border border-black px-2 py-1 rounded-lg">
+                                ${order.total?.toFixed(2)}
+                              </span>
+                            </td>
+
+                            {/* Status Badge */}
+                            <td className="py-4 px-6">
+                              <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-black uppercase border-2 border-black ${statusInfo.bg} ${statusInfo.text} shadow-[2px_2px_0_#000]`}>
+                                <StatusIcon className="w-3.5 h-3.5 stroke-[2.5]" />
                                 {order.status}
                               </span>
                             </td>
+
+                            {/* Quick Action Selector */}
                             <td className="py-4 px-6 text-right">
                               <select
                                 value={order.status}
                                 onChange={(e) => updateOrderStatus(order._id, e.target.value)}
-                                className="bg-zinc-800 border border-zinc-700 text-xs font-medium text-zinc-200 rounded-lg px-3 py-1.5 focus:outline-none focus:border-orange-500 cursor-pointer"
+                                className="bg-white border-2 border-black text-xs font-black text-black rounded-xl px-3 py-2 neo-shadow-xs focus:outline-none cursor-pointer"
                               >
                                 <option value="Pending">Pending</option>
                                 <option value="Preparing">Preparing</option>
@@ -427,43 +512,49 @@ export default function AdminApp() {
         {/* TAB 2: MENU CATALOG CRUD */}
         {activeTab === 'catalog' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl h-fit">
-              <div className="flex items-center gap-2 mb-6">
-                <PlusCircle className="w-5 h-5 text-orange-400" />
-                <h2 className="text-base font-bold text-zinc-100">Add New Dish</h2>
+            
+            {/* Add Product Form Card */}
+            <div className="bg-white border-[3.5px] border-black p-6 rounded-2xl neo-shadow-md h-fit">
+              <div className="flex items-center gap-2 mb-6 pb-3 border-b-2 border-black">
+                <PlusCircle className="w-5 h-5 text-black stroke-[2.5]" />
+                <h2 className="text-base font-black uppercase text-black neo-font-display">Add New Dish</h2>
               </div>
+
               {successMessage && (
-                <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs flex items-center gap-2">
-                  <Check className="w-4 h-4 shrink-0" /> {successMessage}
+                <div className="mb-4 p-3 bg-[#22C55E] border-2 border-black rounded-xl text-black font-black text-xs flex items-center gap-2 shadow-[2px_2px_0_#000]">
+                  <Check className="w-4 h-4 shrink-0 stroke-[3]" /> {successMessage}
                 </div>
               )}
+
               <form onSubmit={handleAddProduct} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Product Name *</label>
+                  <label className="block text-xs font-black uppercase text-black mb-1.5">Product Name *</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Double Cheeseburger"
+                    placeholder="e.g. Double Truffle Burger"
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                    className="w-full bg-zinc-800 border border-zinc-700 text-sm rounded-xl px-3.5 py-2.5 text-zinc-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-white text-sm font-semibold rounded-xl px-3.5 py-2.5 text-black neo-input"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Category *</label>
+                  <label className="block text-xs font-black uppercase text-black mb-1.5">Category *</label>
                   <select
                     value={formData.category}
                     onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full bg-zinc-800 border border-zinc-700 text-sm rounded-xl px-3.5 py-2.5 text-zinc-100 focus:outline-none focus:border-orange-500 cursor-pointer"
+                    className="w-full bg-white text-sm font-bold rounded-xl px-3.5 py-2.5 text-black neo-input cursor-pointer"
                   >
                     {CATEGORIES.map((cat) => (
                       <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
                 </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-zinc-400 mb-1.5">Price ($) *</label>
+                    <label className="block text-xs font-black uppercase text-black mb-1.5">Price ($) *</label>
                     <input
                       type="number"
                       step="0.01"
@@ -471,62 +562,79 @@ export default function AdminApp() {
                       placeholder="12.99"
                       value={formData.price}
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                      className="w-full bg-zinc-800 border border-zinc-700 text-sm rounded-xl px-3.5 py-2.5 text-zinc-100 focus:outline-none focus:border-orange-500"
+                      className="w-full bg-white text-sm font-semibold rounded-xl px-3.5 py-2.5 text-black neo-input"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-zinc-400 mb-1.5">Calories</label>
+                    <label className="block text-xs font-black uppercase text-black mb-1.5">Calories</label>
                     <input
                       type="text"
-                      placeholder="e.g. 620 kcal"
+                      placeholder="620 kcal"
                       value={formData.calories}
                       onChange={(e) => setFormData({ ...formData, calories: e.target.value })}
-                      className="w-full bg-zinc-800 border border-zinc-700 text-sm rounded-xl px-3.5 py-2.5 text-zinc-100 focus:outline-none focus:border-orange-500"
+                      className="w-full bg-white text-sm font-semibold rounded-xl px-3.5 py-2.5 text-black neo-input"
                     />
                   </div>
                 </div>
+
                 <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Dish Photo *</label>
+                  <label className="block text-xs font-black uppercase text-black mb-1.5">Dish Photo *</label>
                   {imagePreview ? (
-                    <div className="relative rounded-xl overflow-hidden border border-zinc-700 bg-zinc-800 h-36 flex items-center justify-center">
+                    <div className="relative rounded-xl overflow-hidden border-[2.5px] border-black bg-zinc-100 h-40 flex items-center justify-center neo-shadow-xs">
                       <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
                       <button
                         type="button"
                         onClick={() => { setImageFile(null); setImagePreview(''); }}
-                        className="absolute top-2 right-2 bg-zinc-950/80 hover:bg-red-600 text-zinc-200 text-xs px-2.5 py-1 rounded-lg transition"
+                        className="absolute top-2 right-2 bg-red-500 text-white font-black text-xs px-2.5 py-1 rounded-lg border-2 border-black neo-btn"
                       >
                         Remove
                       </button>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center border-2 border-dashed border-zinc-700 hover:border-orange-500/60 rounded-xl p-5 cursor-pointer bg-zinc-800/40 hover:bg-zinc-800/70 transition">
-                      <ImageIcon className="w-8 h-8 text-zinc-500 mb-2" />
-                      <span className="text-xs font-medium text-zinc-300">Upload image from PC</span>
+                    <label className="flex flex-col items-center justify-center border-2 border-dashed border-black hover:bg-[#FFE600]/20 rounded-xl p-5 cursor-pointer bg-[#FAF6EF] transition">
+                      <ImageIcon className="w-8 h-8 text-black mb-2" />
+                      <span className="text-xs font-black text-black uppercase">Choose image from PC</span>
+                      <span className="text-[10px] font-bold text-zinc-500 mt-0.5">PNG, JPG, WEBP (Max 50MB)</span>
                       <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
                     </label>
                   )}
                 </div>
+
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full mt-2 py-3 bg-orange-500 hover:bg-orange-600 font-bold text-sm text-white rounded-xl transition active:scale-[0.98] disabled:opacity-50"
+                  className="w-full mt-2 py-3.5 bg-[#FF5722] hover:bg-[#E64A19] font-black text-sm uppercase text-white rounded-xl neo-btn disabled:opacity-50"
                 >
-                  {isSubmitting ? 'Uploading...' : 'Add Dish to Menu'}
+                  {isSubmitting ? 'Uploading Dish...' : 'Add Dish to Menu'}
                 </button>
               </form>
             </div>
 
+            {/* Live Catalog List */}
             <div className="lg:col-span-2 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-zinc-100">Live Catalog Management ({foods.length})</h2>
-                <button onClick={fetchFoods} className="text-xs text-zinc-400 hover:text-orange-400 transition">Refresh</button>
+              <div className="flex items-center justify-between pb-2">
+                <h2 className="text-base font-black uppercase text-black neo-font-display">
+                  Live Food Catalog ({foods.length})
+                </h2>
+                <button 
+                  onClick={fetchFoods} 
+                  className="text-xs font-black uppercase text-black bg-[#FFE600] px-3 py-1 rounded-lg border-2 border-black neo-shadow-xs"
+                >
+                  Refresh
+                </button>
               </div>
+
               {loadingFoods ? (
-                <div className="text-center py-20 text-zinc-500">Loading catalog...</div>
+                <div className="text-center py-20 font-black text-sm">Loading catalog...</div>
+              ) : foods.length === 0 ? (
+                <div className="text-center py-20 text-zinc-600 font-bold">No dishes in the catalog yet.</div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {foods.map((food) => (
-                    <div key={food._id} className="bg-zinc-900 border border-zinc-800 rounded-xl p-4 flex gap-4 items-center group justify-between">
+                    <div 
+                      key={food._id} 
+                      className="bg-white border-[3px] border-black rounded-2xl p-4 flex gap-4 items-center justify-between neo-card"
+                    >
                       <div className="flex items-center gap-3 min-w-0">
                         <img 
                           src={getImageUrl(food.image || food.imageUrl)} 
@@ -535,20 +643,31 @@ export default function AdminApp() {
                             e.target.onerror = null;
                             e.target.src = 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80';
                           }}
-                          className="w-16 h-16 rounded-lg object-cover bg-zinc-800 shrink-0" 
+                          className="w-16 h-16 rounded-xl object-cover bg-zinc-100 border-2 border-black shrink-0" 
                         />
                         <div className="min-w-0 truncate">
-                          <h4 className="font-semibold text-sm text-zinc-100 truncate">{food.name}</h4>
-                          <p className="text-xs text-zinc-400">{food.category} • {food.calories}</p>
-                          <p className="text-sm font-bold text-orange-400 mt-1">${food.price?.toFixed(2)}</p>
+                          <h4 className="font-black text-sm text-black truncate">{food.name}</h4>
+                          <p className="text-xs font-bold text-zinc-600">{food.category} • {food.calories}</p>
+                          <span className="text-xs font-black text-black bg-[#FFE600] px-2 py-0.5 border border-black rounded inline-block mt-1">
+                            ${food.price?.toFixed(2)}
+                          </span>
                         </div>
                       </div>
+
                       <div className="flex items-center gap-2 shrink-0">
-                        <button onClick={() => openEditModal(food)} className="p-2 bg-zinc-800 hover:bg-zinc-700 text-zinc-300 rounded-lg transition">
-                          <Edit2 className="w-4 h-4" />
+                        <button 
+                          onClick={() => openEditModal(food)} 
+                          className="p-2 bg-[#FFE600] hover:bg-[#FFD500] text-black border-2 border-black rounded-xl neo-btn"
+                          title="Edit Dish"
+                        >
+                          <Edit2 className="w-4 h-4 stroke-[2.5]" />
                         </button>
-                        <button onClick={() => handleDeleteProduct(food._id, food.name)} className="p-2 bg-zinc-800 hover:bg-red-600/80 text-zinc-400 hover:text-white rounded-lg transition">
-                          <Trash2 className="w-4 h-4" />
+                        <button 
+                          onClick={() => handleDeleteProduct(food._id, food.name)} 
+                          className="p-2 bg-red-500 hover:bg-red-600 text-white border-2 border-black rounded-xl neo-btn"
+                          title="Delete Dish"
+                        >
+                          <Trash2 className="w-4 h-4 stroke-[2.5]" />
                         </button>
                       </div>
                     </div>
@@ -562,43 +681,48 @@ export default function AdminApp() {
         {/* TAB 3: PROMOTIONS & VIDEO ADS MANAGEMENT */}
         {activeTab === 'promos' && (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
             {/* Upload Ad Form */}
-            <div className="bg-zinc-900 border border-zinc-800 p-6 rounded-2xl h-fit">
-              <div className="flex items-center gap-2 mb-6">
-                <Sparkles className="w-5 h-5 text-orange-400" />
-                <h2 className="text-base font-bold text-zinc-100">Upload Promo Banner / Video Ad</h2>
+            <div className="bg-white border-[3.5px] border-black p-6 rounded-2xl neo-shadow-md h-fit">
+              <div className="flex items-center gap-2 mb-6 pb-3 border-b-2 border-black">
+                <Sparkles className="w-5 h-5 text-black stroke-[2.5]" />
+                <h2 className="text-base font-black uppercase text-black neo-font-display">Upload Promo Billboard</h2>
               </div>
+
               {successMessage && (
-                <div className="mb-4 p-3 bg-emerald-500/10 border border-emerald-500/30 rounded-xl text-emerald-400 text-xs flex items-center gap-2">
-                  <Check className="w-4 h-4 shrink-0" /> {successMessage}
+                <div className="mb-4 p-3 bg-[#22C55E] border-2 border-black rounded-xl text-black font-black text-xs flex items-center gap-2 shadow-[2px_2px_0_#000]">
+                  <Check className="w-4 h-4 shrink-0 stroke-[3]" /> {successMessage}
                 </div>
               )}
+
               <form onSubmit={handleAddBanner} className="space-y-4">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Promotion Headline *</label>
+                  <label className="block text-xs font-black uppercase text-black mb-1.5">Promotion Headline *</label>
                   <input
                     type="text"
                     required
-                    placeholder="e.g. 50% OFF Weekend Specials"
+                    placeholder="e.g. 50% OFF Weekend Madness"
                     value={bannerData.title}
                     onChange={(e) => setBannerData({ ...bannerData, title: e.target.value })}
-                    className="w-full bg-zinc-800 border border-zinc-700 text-sm rounded-xl px-3.5 py-2.5 text-zinc-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-white text-sm font-semibold rounded-xl px-3.5 py-2.5 text-black neo-input"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Subtitle / Tagline</label>
+                  <label className="block text-xs font-black uppercase text-black mb-1.5">Subtitle / Tagline</label>
                   <input
                     type="text"
                     placeholder="e.g. Use Code FEAST50 on checkout"
                     value={bannerData.subtitle}
                     onChange={(e) => setBannerData({ ...bannerData, subtitle: e.target.value })}
-                    className="w-full bg-zinc-800 border border-zinc-700 text-sm rounded-xl px-3.5 py-2.5 text-zinc-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-white text-sm font-semibold rounded-xl px-3.5 py-2.5 text-black neo-input"
                   />
                 </div>
+
                 <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1.5">Poster Image or MP4 Video *</label>
+                  <label className="block text-xs font-black uppercase text-black mb-1.5">Poster Image or MP4 Video *</label>
                   {mediaPreview ? (
-                    <div className="relative rounded-xl overflow-hidden border border-zinc-700 bg-zinc-800 h-40 flex items-center justify-center">
+                    <div className="relative rounded-xl overflow-hidden border-[2.5px] border-black bg-zinc-100 h-40 flex items-center justify-center neo-shadow-xs">
                       {mediaType === 'video' ? (
                         <video src={mediaPreview} className="w-full h-full object-cover" autoPlay muted loop />
                       ) : (
@@ -607,24 +731,25 @@ export default function AdminApp() {
                       <button
                         type="button"
                         onClick={() => { setMediaFile(null); setMediaPreview(''); }}
-                        className="absolute top-2 right-2 bg-zinc-950/80 hover:bg-red-600 text-zinc-200 text-xs px-2.5 py-1 rounded-lg transition"
+                        className="absolute top-2 right-2 bg-red-500 text-white font-black text-xs px-2.5 py-1 rounded-lg border-2 border-black neo-btn"
                       >
                         Remove
                       </button>
                     </div>
                   ) : (
-                    <label className="flex flex-col items-center justify-center border-2 border-dashed border-zinc-700 hover:border-orange-500/60 rounded-xl p-5 cursor-pointer bg-zinc-800/40 hover:bg-zinc-800/70 transition">
-                      <Film className="w-8 h-8 text-zinc-500 mb-2" />
-                      <span className="text-xs font-medium text-zinc-300">Choose Image or Short MP4 from PC</span>
-                      <span className="text-[10px] text-zinc-500 mt-0.5">PNG, JPG, WEBP, MP4 (Max 50MB)</span>
+                    <label className="flex flex-col items-center justify-center border-2 border-dashed border-black hover:bg-[#FFE600]/20 rounded-xl p-5 cursor-pointer bg-[#FAF6EF] transition">
+                      <Film className="w-8 h-8 text-black mb-2" />
+                      <span className="text-xs font-black text-black uppercase">Choose Image or MP4 Video</span>
+                      <span className="text-[10px] font-bold text-zinc-500 mt-0.5">PNG, JPG, MP4 (Max 50MB)</span>
                       <input type="file" accept="image/*,video/*" onChange={handleMediaUpload} className="hidden" />
                     </label>
                   )}
                 </div>
+
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full mt-2 py-3 bg-orange-500 hover:bg-orange-600 font-bold text-sm text-white rounded-xl transition active:scale-[0.98] disabled:opacity-50"
+                  className="w-full mt-2 py-3.5 bg-[#FF5722] hover:bg-[#E64A19] font-black text-sm uppercase text-white rounded-xl neo-btn disabled:opacity-50"
                 >
                   {isSubmitting ? 'Uploading Banner...' : 'Publish to Storefront Slider'}
                 </button>
@@ -633,39 +758,52 @@ export default function AdminApp() {
 
             {/* Live Slider Items List */}
             <div className="lg:col-span-2 space-y-4">
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-bold text-zinc-100">Live Active Banner Slides ({banners.length})</h2>
-                <button onClick={fetchBanners} className="text-xs text-zinc-400 hover:text-orange-400 transition">Refresh</button>
+              <div className="flex items-center justify-between pb-2">
+                <h2 className="text-base font-black uppercase text-black neo-font-display">
+                  Live Banner Slides ({banners.length})
+                </h2>
+                <button 
+                  onClick={fetchBanners} 
+                  className="text-xs font-black uppercase text-black bg-[#FFE600] px-3 py-1 rounded-lg border-2 border-black neo-shadow-xs"
+                >
+                  Refresh
+                </button>
               </div>
+
               {loadingBanners ? (
-                <div className="text-center py-20 text-zinc-500">Loading promotional slides...</div>
+                <div className="text-center py-20 font-black text-sm">Loading promotional slides...</div>
               ) : banners.length === 0 ? (
-                <div className="text-center py-20 text-zinc-500">No promo slides active yet. Upload your first poster above!</div>
+                <div className="text-center py-20 text-zinc-600 font-bold">
+                  No promo slides active yet. Upload your first poster on the left!
+                </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {banners.map((b) => (
-                    <div key={b._id} className="bg-zinc-900 border border-zinc-800 rounded-xl overflow-hidden relative group">
-                      <div className="h-36 w-full bg-zinc-800 relative">
+                    <div 
+                      key={b._id} 
+                      className="bg-white border-[3px] border-black rounded-2xl overflow-hidden relative neo-card"
+                    >
+                      <div className="h-40 w-full bg-zinc-100 relative border-b-2 border-black">
                         {b.mediaType === 'video' ? (
                           <video src={b.mediaUrl} className="w-full h-full object-cover" autoPlay muted loop playsInline />
                         ) : (
                           <img src={b.mediaUrl} alt={b.title} className="w-full h-full object-cover" />
                         )}
-                        <span className="absolute top-2 left-2 bg-zinc-950/80 px-2 py-0.5 rounded text-[10px] font-bold uppercase text-orange-400">
+                        <span className="absolute top-2.5 left-2.5 bg-[#FFE600] border-2 border-black px-2 py-0.5 rounded text-[10px] font-black uppercase text-black shadow-[2px_2px_0_#000]">
                           {b.mediaType}
                         </span>
                       </div>
                       <div className="p-4 flex justify-between items-center">
                         <div className="min-w-0 pr-2">
-                          <h4 className="font-bold text-sm text-zinc-100 truncate">{b.title}</h4>
-                          {b.subtitle && <p className="text-xs text-zinc-400 truncate">{b.subtitle}</p>}
+                          <h4 className="font-black text-sm text-black truncate">{b.title}</h4>
+                          {b.subtitle && <p className="text-xs font-bold text-zinc-600 truncate">{b.subtitle}</p>}
                         </div>
                         <button
                           onClick={() => handleDeleteBanner(b._id)}
-                          className="p-2 bg-zinc-800 hover:bg-red-600 text-zinc-400 hover:text-white rounded-lg transition shrink-0"
+                          className="p-2 bg-red-500 hover:bg-red-600 text-white border-2 border-black rounded-xl neo-btn shrink-0"
                           title="Delete Banner"
                         >
-                          <Trash2 className="w-4 h-4" />
+                          <Trash2 className="w-4 h-4 stroke-[2.5]" />
                         </button>
                       </div>
                     </div>
@@ -677,34 +815,42 @@ export default function AdminApp() {
         )}
       </main>
 
-      {/* EDIT MODAL */}
+      {/* EDIT DISH MODAL */}
       {editingProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 backdrop-blur-sm p-4">
-          <div className="bg-zinc-900 border border-zinc-800 rounded-2xl w-full max-w-lg overflow-hidden shadow-2xl">
-            <div className="p-5 border-b border-zinc-800 flex items-center justify-between">
-              <h3 className="font-bold text-base text-zinc-100">Modify Dish Details</h3>
-              <button onClick={() => setEditingProduct(null)} className="text-zinc-400 hover:text-white p-1">
-                <X className="w-5 h-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4">
+          <div className="bg-[#FFFDF5] border-[4px] border-black rounded-2xl w-full max-w-lg overflow-hidden shadow-[8px_8px_0px_#000] animate-in zoom-in-95 duration-150">
+            
+            {/* Modal Header */}
+            <div className="p-4 bg-[#FFE600] border-b-[3px] border-black flex items-center justify-between">
+              <h3 className="font-black text-base uppercase text-black neo-font-display">Modify Dish Details</h3>
+              <button 
+                onClick={() => setEditingProduct(null)} 
+                className="p-1 bg-white hover:bg-zinc-100 border-2 border-black rounded-lg shadow-[2px_2px_0_#000]"
+              >
+                <X className="w-5 h-5 stroke-[2.5]" />
               </button>
             </div>
+
+            {/* Modal Form */}
             <form onSubmit={handleUpdateProduct} className="p-6 space-y-4">
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">Product Name</label>
+                <label className="block text-xs font-black uppercase text-black mb-1">Product Name</label>
                 <input
                   type="text"
                   required
                   value={editFormData.name}
                   onChange={(e) => setEditFormData({ ...editFormData, name: e.target.value })}
-                  className="w-full bg-zinc-800 border border-zinc-700 text-sm rounded-xl px-3.5 py-2 text-zinc-100 focus:outline-none focus:border-orange-500"
+                  className="w-full bg-white text-sm font-semibold rounded-xl px-3.5 py-2 text-black neo-input"
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1">Category</label>
+                  <label className="block text-xs font-black uppercase text-black mb-1">Category</label>
                   <select
                     value={editFormData.category}
                     onChange={(e) => setEditFormData({ ...editFormData, category: e.target.value })}
-                    className="w-full bg-zinc-800 border border-zinc-700 text-sm rounded-xl px-3.5 py-2 text-zinc-100 focus:outline-none focus:border-orange-500 cursor-pointer"
+                    className="w-full bg-white text-sm font-bold rounded-xl px-3.5 py-2 text-black neo-input cursor-pointer"
                   >
                     {CATEGORIES.map((c) => (
                       <option key={c} value={c}>{c}</option>
@@ -712,48 +858,55 @@ export default function AdminApp() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-zinc-400 mb-1">Price ($)</label>
+                  <label className="block text-xs font-black uppercase text-black mb-1">Price ($)</label>
                   <input
                     type="number"
                     step="0.01"
                     required
                     value={editFormData.price}
                     onChange={(e) => setEditFormData({ ...editFormData, price: e.target.value })}
-                    className="w-full bg-zinc-800 border border-zinc-700 text-sm rounded-xl px-3.5 py-2 text-zinc-100 focus:outline-none focus:border-orange-500"
+                    className="w-full bg-white text-sm font-semibold rounded-xl px-3.5 py-2 text-black neo-input"
                   />
                 </div>
               </div>
+
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">Calories</label>
+                <label className="block text-xs font-black uppercase text-black mb-1">Calories</label>
                 <input
                   type="text"
                   value={editFormData.calories}
                   onChange={(e) => setEditFormData({ ...editFormData, calories: e.target.value })}
-                  className="w-full bg-zinc-800 border border-zinc-700 text-sm rounded-xl px-3.5 py-2 text-zinc-100 focus:outline-none focus:border-orange-500"
+                  className="w-full bg-white text-sm font-semibold rounded-xl px-3.5 py-2 text-black neo-input"
                 />
               </div>
+
               <div>
-                <label className="block text-xs font-medium text-zinc-400 mb-1">Replace Image (Optional)</label>
+                <label className="block text-xs font-black uppercase text-black mb-1">Replace Image (Optional)</label>
                 <div className="flex items-center gap-3">
-                  <img src={editImagePreview} alt="Preview" className="w-14 h-14 rounded-lg object-cover bg-zinc-800 border border-zinc-700" />
-                  <label className="px-4 py-2 bg-zinc-800 hover:bg-zinc-700 border border-zinc-700 text-xs font-semibold rounded-xl cursor-pointer text-zinc-200">
+                  <img 
+                    src={editImagePreview} 
+                    alt="Preview" 
+                    className="w-14 h-14 rounded-xl object-cover bg-zinc-100 border-2 border-black shadow-[2px_2px_0_#000]" 
+                  />
+                  <label className="px-4 py-2 bg-[#FFE600] hover:bg-[#FFD500] border-2 border-black text-xs font-black uppercase rounded-xl cursor-pointer text-black neo-btn">
                     Change Image
                     <input type="file" accept="image/*" onChange={handleEditImageUpload} className="hidden" />
                   </label>
                 </div>
               </div>
-              <div className="flex gap-3 pt-3 border-t border-zinc-800">
+
+              <div className="flex gap-3 pt-3 border-t-2 border-black">
                 <button
                   type="button"
                   onClick={() => setEditingProduct(null)}
-                  className="flex-1 py-2.5 bg-zinc-800 hover:bg-zinc-700 rounded-xl text-sm font-semibold text-zinc-300"
+                  className="flex-1 py-3 bg-white hover:bg-zinc-100 border-2 border-black rounded-xl text-xs font-black uppercase text-black neo-btn"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="flex-1 py-2.5 bg-orange-500 hover:bg-orange-600 rounded-xl text-sm font-bold text-white shadow-lg shadow-orange-500/20"
+                  className="flex-1 py-3 bg-[#FF5722] hover:bg-[#E64A19] border-2 border-black rounded-xl text-xs font-black uppercase text-white neo-btn"
                 >
                   {isSubmitting ? 'Saving...' : 'Save Changes'}
                 </button>

@@ -15,3 +15,8 @@ npm-debug.log*
 # Uploaded media assets (optional: keep repo light)
 server/uploads/*
 !server/uploads/.gitkeep
+
+# Temporary files
+.tmp.driveupload/
+.DS_Store
+Thumbs.db

@@ -61,6 +61,7 @@
   box-shadow: 4px 4px 0px #121212;
   transition: all 0.12s ease-in-out;
   cursor: pointer;
+  position: relative;
 }
 
 .neo-btn:hover:not(:disabled) {
@@ -77,7 +78,7 @@
 .neo-card {
   border: 3px solid #121212;
   box-shadow: 5px 5px 0px #121212;
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.2s ease;
 }
 
 .neo-card:hover {
@@ -105,4 +106,106 @@
 .no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+}
+
+/* ========================================================
+   SMOOTH SPARKLE & MICRO-ANIMATIONS
+   ======================================================== */
+
+@keyframes cart-wiggle {
+  0% {
+    transform: scale(1) rotate(0deg);
+  }
+  20% {
+    transform: scale(1.18) rotate(-8deg);
+  }
+  40% {
+    transform: scale(1.18) rotate(8deg);
+  }
+  60% {
+    transform: scale(1.1) rotate(-4deg);
+  }
+  80% {
+    transform: scale(1.05) rotate(2deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+.animate-cart-wiggle {
+  animation: cart-wiggle 0.65s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes sparkle-burst {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(0.2) rotate(0deg);
+  }
+  60% {
+    opacity: 1;
+    transform: translate(var(--dx), var(--dy)) scale(1.2) rotate(180deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(var(--dx) * 1.3), calc(var(--dy) * 1.3 + 15px)) scale(0.4) rotate(360deg);
+  }
+}
+
+.animate-sparkle-burst {
+  animation: sparkle-burst 0.75s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+}
+
+@keyframes float-plus-one {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, 0) scale(0.5) rotate(-5deg);
+  }
+  25% {
+    opacity: 1;
+    transform: translate(-50%, -20px) scale(1.2) rotate(4deg);
+  }
+  75% {
+    opacity: 1;
+    transform: translate(-50%, -35px) scale(1) rotate(-2deg);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50px) scale(0.7) rotate(0deg);
+  }
+}
+
+.animate-float-plus-one {
+  animation: float-plus-one 0.85s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes badge-pop {
+  0% {
+    transform: scale(0.6);
+  }
+  50% {
+    transform: scale(1.4);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+.animate-badge-pop {
+  animation: badge-pop 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+}
+
+@keyframes card-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-card-fade-in {
+  animation: card-fade-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }

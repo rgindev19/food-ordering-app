@@ -18,7 +18,8 @@ import {
   ArrowRight,
   ShieldCheck,
   Zap,
-  Tag
+  Tag,
+  Check
 } from 'lucide-react';
 import { useCartStore } from './store/useCartStore';
 import logoImg from './assets/logo (2).png';
@@ -34,6 +35,9 @@ const CATEGORY_COLORS = {
   'Desserts': 'bg-[#22C55E] text-black'
 };
 
+const SPARKLE_COLORS = ['#FFE600', '#FF5722', '#22C55E', '#38BDF8', '#FF70A6', '#C084FC'];
+const SPARKLE_ICONS = ['✨', '⭐', '💥', '🍕', '🍔', '💛'];
+
 export default function App() {
   const [foods, setFoods] = useState([]);
   const [banners, setBanners] = useState([]);
@@ -43,6 +47,12 @@ export default function App() {
   const [search, setSearch] = useState('');
   const [orderSuccess, setOrderSuccess] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Smooth Sparkle & Micro-Animation States
+  const [sparkles, setSparkles] = useState([]);
+  const [floatBadges, setFloatBadges] = useState([]);
+  const [isCartBouncing, setIsCartBouncing] = useState(false);
+  const [recentlyAddedId, setRecentlyAddedId] = useState(null);
 
   const { cart, isCartOpen, toggleCart, addToCart, updateQuantity, clearCart, getTotals } = useCartStore();
 
@@ -89,6 +99,64 @@ export default function App() {
     return () => clearInterval(timer);
   }, [banners.length]);
 
+  // Sparkle Burst Trigger Function
+  const triggerAddToCartWithSparkles = (item, e) => {
+    addToCart(item);
+
+    // Button feedback state
+    setRecentlyAddedId(item._id);
+    setTimeout(() => setRecentlyAddedId(null), 700);
+
+    // Navbar cart wiggle animation
+    setIsCartBouncing(true);
+    setTimeout(() => setIsCartBouncing(false), 650);
+
+    // Calculate position for sparkles
+    const rect = e.currentTarget.getBoundingClientRect();
+    const originX = rect.left + rect.width / 2;
+    const originY = rect.top + rect.height / 2;
+
+    // Generate 8-10 bursting particles
+    const particleCount = 10;
+    const newSparkles = [];
+    const timestamp = Date.now();
+
+    for (let i = 0; i < particleCount; i++) {
+      const angle = (i / particleCount) * (2 * Math.PI) + (Math.random() * 0.4 - 0.2);
+      const distance = 45 + Math.random() * 55; // Spread distance in pixels
+      const dx = `${Math.cos(angle) * distance}px`;
+      const dy = `${Math.sin(angle) * distance - 20}px`; // Slight upward drift
+
+      newSparkles.push({
+        id: `${timestamp}-${i}`,
+        x: originX,
+        y: originY,
+        dx,
+        dy,
+        color: SPARKLE_COLORS[i % SPARKLE_COLORS.length],
+        symbol: SPARKLE_ICONS[i % SPARKLE_ICONS.length],
+        size: Math.random() > 0.4 ? 'text-base' : 'text-sm'
+      });
+    }
+
+    setSparkles((prev) => [...prev, ...newSparkles]);
+
+    // Floating "+1" Pill Tag
+    const newFloatBadge = {
+      id: `badge-${timestamp}`,
+      x: originX,
+      y: originY,
+      name: item.name
+    };
+    setFloatBadges((prev) => [...prev, newFloatBadge]);
+
+    // Clean up particles after animation completes
+    setTimeout(() => {
+      setSparkles((prev) => prev.filter((p) => !newSparkles.some((ns) => ns.id === p.id)));
+      setFloatBadges((prev) => prev.filter((b) => b.id !== newFloatBadge.id));
+    }, 850);
+  };
+
   const handleCheckout = async () => {
     if (cart.length === 0) return;
     setIsSubmitting(true);
@@ -126,9 +194,44 @@ export default function App() {
   const cartTotalItems = cart.reduce((a, c) => a + c.quantity, 0);
 
   return (
-    <div className="min-h-screen bg-[#FAF6EF] text-[#121212] flex flex-col font-sans selection:bg-[#FFE600] selection:text-black">
+    <div className="min-h-screen bg-[#FAF6EF] text-[#121212] flex flex-col font-sans selection:bg-[#FFE600] selection:text-black relative overflow-x-hidden">
       
-      {/* NEOBRUTALIST TOP BANNER TICKER */}
+      {/* FLOATING SPARKLE PARTICLES OVERLAY */}
+      <div className="pointer-events-none fixed inset-0 z-50 overflow-hidden">
+        {sparkles.map((sparkle) => (
+          <div
+            key={sparkle.id}
+            className="absolute animate-sparkle-burst select-none drop-shadow-[1px_1px_0px_#000]"
+            style={{
+              left: `${sparkle.x}px`,
+              top: `${sparkle.y}px`,
+              '--dx': sparkle.dx,
+              '--dy': sparkle.dy,
+              color: sparkle.color
+            }}
+          >
+            <span className={`${sparkle.size} font-black`}>{sparkle.symbol}</span>
+          </div>
+        ))}
+
+        {floatBadges.map((badge) => (
+          <div
+            key={badge.id}
+            className="absolute animate-float-plus-one select-none"
+            style={{
+              left: `${badge.x}px`,
+              top: `${badge.y}px`
+            }}
+          >
+            <div className="bg-[#FFE600] text-black border-2 border-black px-2.5 py-1 rounded-full text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_#000] flex items-center gap-1">
+              <Sparkles className="w-3 h-3 fill-black text-black" />
+              <span>+1 ADDED</span>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* TOP BANNER TICKER */}
       <div className="bg-[#FFE600] border-b-[3px] border-black py-1.5 px-4 overflow-hidden select-none">
         <div className="flex items-center justify-center gap-6 text-xs font-black uppercase tracking-wider text-black">
           <span className="flex items-center gap-1.5">⚡ FAST 25-MIN DISPATCH</span>
@@ -142,7 +245,7 @@ export default function App() {
       {/* NAVIGATION HEADER */}
       <header className="sticky top-0 z-30 bg-[#FAF6EF]/95 backdrop-blur border-b-[3px] border-black px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-[0_4px_0_#000]">
         <div className="flex items-center gap-3">
-          <div className="bg-[#FFE600] border-[2.5px] border-black p-1.5 rounded-xl neo-shadow-xs flex items-center justify-center rotate-[-2deg]">
+          <div className="bg-[#FFE600] border-[2.5px] border-black p-1.5 rounded-xl neo-shadow-xs flex items-center justify-center rotate-[-2deg] hover:rotate-0 transition-transform duration-200 cursor-pointer">
             <img 
               src={logoImg} 
               alt="SavorMERN" 
@@ -152,7 +255,7 @@ export default function App() {
                 e.target.style.display = 'none';
               }}
             />
-            <Flame className="w-5 h-5 text-black" />
+            <Flame className="w-5 h-5 text-black animate-pulse" />
           </div>
           <div>
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-black neo-font-display flex items-center gap-1">
@@ -177,23 +280,27 @@ export default function App() {
           {search && (
             <button 
               onClick={() => setSearch('')}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-black hover:bg-zinc-100 p-0.5 rounded"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-black hover:bg-zinc-100 p-0.5 rounded transition"
             >
               <X className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
 
-        {/* Bag / Cart Button */}
+        {/* Bag / Cart Button with Wiggle Animation */}
         <div className="flex items-center gap-3">
           <button
             onClick={toggleCart}
-            className="relative flex items-center gap-2.5 px-4 sm:px-5 py-2.5 bg-[#FFE600] hover:bg-[#FFD500] text-black font-black text-sm rounded-xl neo-btn"
+            className={`relative flex items-center gap-2.5 px-4 sm:px-5 py-2.5 bg-[#FFE600] hover:bg-[#FFD500] text-black font-black text-sm rounded-xl neo-btn ${
+              isCartBouncing ? 'animate-cart-wiggle ring-4 ring-[#FF5722]/30' : ''
+            }`}
           >
             <ShoppingBag className="w-5 h-5 stroke-[2.5]" />
             <span className="hidden sm:inline neo-font-display">BAG</span>
             {cartTotalItems > 0 && (
-              <span className="bg-[#FF5722] text-white text-xs font-black px-2 py-0.5 rounded-full border-[2px] border-black shadow-[1px_1px_0_#000]">
+              <span className={`bg-[#FF5722] text-white text-xs font-black px-2 py-0.5 rounded-full border-[2px] border-black shadow-[1px_1px_0_#000] ${
+                isCartBouncing ? 'animate-badge-pop' : ''
+              }`}>
                 {cartTotalItems}
               </span>
             )}
@@ -245,7 +352,7 @@ export default function App() {
                   />
                 )}
 
-                {/* High-Contrast Neobrutalist Banner Content */}
+                {/* Banner Content */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent flex flex-col justify-end p-6 sm:p-10">
                   <div className="max-w-2xl space-y-3">
                     <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-black uppercase bg-[#FFE600] text-black border-2 border-black neo-shadow-xs rotate-[-1deg]">
@@ -305,7 +412,7 @@ export default function App() {
 
         {/* VALUE PROPOSITION BADGES */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5">
-          <div className="bg-white border-[2.5px] border-black rounded-xl p-3 neo-shadow-xs flex items-center gap-3">
+          <div className="bg-white border-[2.5px] border-black rounded-xl p-3 neo-shadow-xs flex items-center gap-3 hover:-translate-y-1 hover:shadow-[4px_4px_0px_#000] transition duration-200">
             <div className="p-2 bg-[#FFE600] border-2 border-black rounded-lg neo-shadow-xs text-black">
               <Zap className="w-4 h-4" />
             </div>
@@ -314,7 +421,7 @@ export default function App() {
               <p className="text-[11px] font-semibold text-zinc-600">25 Min Express</p>
             </div>
           </div>
-          <div className="bg-white border-[2.5px] border-black rounded-xl p-3 neo-shadow-xs flex items-center gap-3">
+          <div className="bg-white border-[2.5px] border-black rounded-xl p-3 neo-shadow-xs flex items-center gap-3 hover:-translate-y-1 hover:shadow-[4px_4px_0px_#000] transition duration-200">
             <div className="p-2 bg-[#FF70A6] border-2 border-black rounded-lg neo-shadow-xs text-black">
               <Star className="w-4 h-4 fill-black" />
             </div>
@@ -323,7 +430,7 @@ export default function App() {
               <p className="text-[11px] font-semibold text-zinc-600">Fresh Daily Prep</p>
             </div>
           </div>
-          <div className="bg-white border-[2.5px] border-black rounded-xl p-3 neo-shadow-xs flex items-center gap-3">
+          <div className="bg-white border-[2.5px] border-black rounded-xl p-3 neo-shadow-xs flex items-center gap-3 hover:-translate-y-1 hover:shadow-[4px_4px_0px_#000] transition duration-200">
             <div className="p-2 bg-[#22C55E] border-2 border-black rounded-lg neo-shadow-xs text-black">
               <ShieldCheck className="w-4 h-4" />
             </div>
@@ -332,7 +439,7 @@ export default function App() {
               <p className="text-[11px] font-semibold text-zinc-600">100% Organic</p>
             </div>
           </div>
-          <div className="bg-white border-[2.5px] border-black rounded-xl p-3 neo-shadow-xs flex items-center gap-3">
+          <div className="bg-white border-[2.5px] border-black rounded-xl p-3 neo-shadow-xs flex items-center gap-3 hover:-translate-y-1 hover:shadow-[4px_4px_0px_#000] transition duration-200">
             <div className="p-2 bg-[#A855F7] border-2 border-black rounded-lg neo-shadow-xs text-white">
               <Tag className="w-4 h-4" />
             </div>
@@ -362,7 +469,7 @@ export default function App() {
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
-                  className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black uppercase tracking-wide border-[2.5px] border-black transition whitespace-nowrap cursor-pointer ${
+                  className={`px-4 sm:px-5 py-2.5 rounded-xl text-xs sm:text-sm font-black uppercase tracking-wide border-[2.5px] border-black transition-all duration-150 whitespace-nowrap cursor-pointer ${
                     isSelected
                       ? `${activeBg} shadow-[4px_4px_0px_#000] -translate-y-1`
                       : 'bg-white hover:bg-zinc-100 text-black hover:shadow-[3px_3px_0px_#000]'
@@ -398,64 +505,82 @@ export default function App() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-            {filteredItems.map((item) => (
-              <div
-                key={item._id}
-                className="bg-white border-[3px] border-black rounded-2xl overflow-hidden neo-card flex flex-col justify-between group"
-              >
-                {/* Image Section */}
-                <div className="h-52 w-full overflow-hidden relative bg-zinc-100 border-b-[3px] border-black">
-                  <img
-                    src={getImageUrl(item.image || item.imageUrl)}
-                    alt={item.name}
-                    onError={(e) => {
-                      e.target.onerror = null;
-                      e.target.src =
-                        'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80';
-                    }}
-                    className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
-                  />
+            {filteredItems.map((item, index) => {
+              const isAdded = recentlyAddedId === item._id;
 
-                  {/* Category Pill Tag */}
-                  <span className="absolute top-3 left-3 bg-white border-2 border-black px-2.5 py-0.5 rounded-lg text-[11px] font-black uppercase text-black shadow-[2px_2px_0px_#000]">
-                    {item.category}
-                  </span>
+              return (
+                <div
+                  key={item._id}
+                  style={{ animationDelay: `${index * 50}ms` }}
+                  className="bg-white border-[3px] border-black rounded-2xl overflow-hidden neo-card flex flex-col justify-between group animate-card-fade-in"
+                >
+                  {/* Image Section */}
+                  <div className="h-52 w-full overflow-hidden relative bg-zinc-100 border-b-[3px] border-black">
+                    <img
+                      src={getImageUrl(item.image || item.imageUrl)}
+                      alt={item.name}
+                      onError={(e) => {
+                        e.target.onerror = null;
+                        e.target.src =
+                          'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80';
+                      }}
+                      className="w-full h-full object-cover group-hover:scale-105 transition duration-300"
+                    />
 
-                  {/* Calories Tag */}
-                  {item.calories && (
-                    <span className="absolute bottom-3 left-3 bg-[#FFE600] border-2 border-black px-2 py-0.5 rounded-md text-[10px] font-black uppercase text-black shadow-[2px_2px_0px_#000]">
-                      {item.calories}
+                    {/* Category Pill Tag */}
+                    <span className="absolute top-3 left-3 bg-white border-2 border-black px-2.5 py-0.5 rounded-lg text-[11px] font-black uppercase text-black shadow-[2px_2px_0px_#000]">
+                      {item.category}
                     </span>
-                  )}
-                </div>
 
-                {/* Content Section */}
-                <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
-                  <div>
-                    <h3 className="font-black text-lg text-black leading-snug tracking-tight neo-font-display">
-                      {item.name}
-                    </h3>
+                    {/* Calories Tag */}
+                    {item.calories && (
+                      <span className="absolute bottom-3 left-3 bg-[#FFE600] border-2 border-black px-2 py-0.5 rounded-md text-[10px] font-black uppercase text-black shadow-[2px_2px_0px_#000]">
+                        {item.calories}
+                      </span>
+                    )}
                   </div>
 
-                  {/* Price & Add Button */}
-                  <div className="flex items-center justify-between pt-3 border-t-2 border-zinc-200">
-                    <div className="bg-[#FFE600] border-2 border-black px-2.5 py-1 rounded-lg shadow-[2px_2px_0px_#000]">
-                      <span className="text-base font-black text-black">
-                        ${item.price?.toFixed(2)}
-                      </span>
+                  {/* Content Section */}
+                  <div className="p-5 flex-1 flex flex-col justify-between space-y-4">
+                    <div>
+                      <h3 className="font-black text-lg text-black leading-snug tracking-tight neo-font-display">
+                        {item.name}
+                      </h3>
                     </div>
 
-                    <button
-                      onClick={() => addToCart(item)}
-                      className="flex items-center gap-1.5 px-3.5 py-2 bg-[#FF5722] hover:bg-[#E64A19] text-white font-black text-xs uppercase rounded-xl neo-btn"
-                    >
-                      <Plus className="w-4 h-4 stroke-[3]" />
-                      <span>ADD</span>
-                    </button>
+                    {/* Price & Add Button */}
+                    <div className="flex items-center justify-between pt-3 border-t-2 border-zinc-200">
+                      <div className="bg-[#FFE600] border-2 border-black px-2.5 py-1 rounded-lg shadow-[2px_2px_0px_#000]">
+                        <span className="text-base font-black text-black">
+                          ${item.price?.toFixed(2)}
+                        </span>
+                      </div>
+
+                      <button
+                        onClick={(e) => triggerAddToCartWithSparkles(item, e)}
+                        className={`flex items-center gap-1.5 px-3.5 py-2 font-black text-xs uppercase rounded-xl neo-btn transition-transform ${
+                          isAdded 
+                            ? 'bg-[#22C55E] text-black scale-105 shadow-[2px_2px_0px_#000]' 
+                            : 'bg-[#FF5722] hover:bg-[#E64A19] text-white'
+                        }`}
+                      >
+                        {isAdded ? (
+                          <>
+                            <Check className="w-4 h-4 stroke-[3] animate-bounce" />
+                            <span>ADDED!</span>
+                          </>
+                        ) : (
+                          <>
+                            <Plus className="w-4 h-4 stroke-[3]" />
+                            <span>ADD</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </main>
@@ -480,7 +605,7 @@ export default function App() {
 
       {/* CART DRAWER / SIDE OVERLAY */}
       {isCartOpen && (
-        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs">
+        <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
           <div className="w-full max-w-md bg-[#FFFDF5] border-l-[4px] border-black h-full flex flex-col shadow-[-8px_0px_0px_#000] animate-in slide-in-from-right duration-200">
             
             {/* Drawer Header */}
@@ -491,7 +616,7 @@ export default function App() {
               </div>
               <button 
                 onClick={toggleCart} 
-                className="p-1.5 bg-white hover:bg-zinc-100 border-2 border-black rounded-lg neo-shadow-xs cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+                className="p-1.5 bg-white hover:bg-zinc-100 border-2 border-black rounded-lg neo-shadow-xs cursor-pointer active:translate-x-0.5 active:translate-y-0.5 transition"
               >
                 <X className="w-5 h-5 stroke-[2.5]" />
               </button>
@@ -500,7 +625,7 @@ export default function App() {
             {/* Drawer Body */}
             <div className="flex-1 overflow-y-auto p-5 space-y-3.5">
               {orderSuccess ? (
-                <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 bg-white border-[3px] border-black rounded-2xl neo-shadow my-auto">
+                <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 bg-white border-[3px] border-black rounded-2xl neo-shadow my-auto animate-in zoom-in-95 duration-200">
                   <div className="w-16 h-16 bg-[#22C55E] text-black border-[3px] border-black rounded-2xl flex items-center justify-center neo-shadow">
                     <CheckCircle2 className="w-10 h-10 stroke-[2.5]" />
                   </div>
@@ -536,7 +661,7 @@ export default function App() {
                 cart.map((item) => (
                   <div
                     key={item._id}
-                    className="flex items-center justify-between bg-white p-3.5 rounded-xl border-[2.5px] border-black neo-shadow-xs"
+                    className="flex items-center justify-between bg-white p-3.5 rounded-xl border-[2.5px] border-black neo-shadow-xs transition-transform hover:-translate-y-0.5"
                   >
                     <div className="flex items-center gap-3 pr-2 flex-1 min-w-0">
                       <img

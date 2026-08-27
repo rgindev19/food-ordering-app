@@ -124,16 +124,12 @@ export default function CartDrawer() {
                 </div>
 
                 <button
-                  onClick={handleCheckout}
+                  onClick={onProceedToCheckout || handleCheckout}
                   disabled={isSubmitting}
                   className="w-full py-4 bg-[#FF5722] hover:bg-[#E64A19] disabled:opacity-50 text-white font-black text-base uppercase rounded-xl border-[3px] border-black neo-shadow hover:shadow-[6px_6px_0px_#000] flex items-center justify-center gap-2 cursor-pointer transition active:translate-x-0.5 active:translate-y-0.5"
                 >
-                  {isSubmitting ? 'Placing Order...' : (
-                    <>
-                      <span>Checkout Now</span>
-                      <ArrowRight className="w-5 h-5 stroke-[3]" />
-                    </>
-                  )}
+                  <span>Proceed to Checkout</span>
+                  <ArrowRight className="w-5 h-5 stroke-[3]" />
                 </button>
               </div>
             )}

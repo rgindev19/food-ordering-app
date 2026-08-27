@@ -432,8 +432,9 @@ export default function AdminApp() {
                     <thead>
                       <tr className="border-b-[3px] border-black text-xs font-black uppercase tracking-wider text-black bg-[#FFE600]">
                         <th className="py-4 px-6">Order ID & Time</th>
+                        <th className="py-4 px-6">Customer & Address</th>
                         <th className="py-4 px-6">Items Breakdown</th>
-                        <th className="py-4 px-6">Total Amount</th>
+                        <th className="py-4 px-6">Total & Payment</th>
                         <th className="py-4 px-6">Current Status</th>
                         <th className="py-4 px-6 text-right">Quick Action</th>
                       </tr>
@@ -456,8 +457,30 @@ export default function AdminApp() {
                               </div>
                             </td>
 
+                            {/* Customer & Address */}
+                            <td className="py-4 px-6 max-w-xs">
+                              <p className="font-black text-xs text-black">
+                                {order.customerName || 'Guest Foodie'}
+                              </p>
+                              {order.phone && (
+                                <p className="text-[11px] font-bold text-zinc-600">{order.phone}</p>
+                              )}
+                              {order.deliveryAddress?.street ? (
+                                <p className="text-[11px] font-semibold text-zinc-500 truncate mt-0.5">
+                                  📍 {order.deliveryAddress.street}, {order.deliveryAddress.city}
+                                </p>
+                              ) : (
+                                <p className="text-[11px] font-semibold text-zinc-400">Pickup / Storefront</p>
+                              )}
+                              {order.notes && (
+                                <p className="text-[10px] font-bold text-[#FF5722] bg-[#FFE600]/30 border border-black/30 px-1.5 py-0.5 rounded mt-1 inline-block truncate max-w-full">
+                                  📝 {order.notes}
+                                </p>
+                              )}
+                            </td>
+
                             {/* Items Breakdown */}
-                            <td className="py-4 px-6 max-w-sm">
+                            <td className="py-4 px-6 max-w-xs">
                               <div className="space-y-1">
                                 {order.items?.map((item, idx) => (
                                   <div key={idx} className="text-xs font-bold text-zinc-800 flex items-center gap-1.5">
@@ -470,11 +493,19 @@ export default function AdminApp() {
                               </div>
                             </td>
 
-                            {/* Total Amount */}
+                            {/* Total Amount & Payment */}
                             <td className="py-4 px-6">
                               <span className="font-black text-base text-black bg-[#22C55E]/20 border border-black px-2 py-1 rounded-lg">
                                 ${order.total?.toFixed(2)}
                               </span>
+                              <p className="text-[11px] font-bold text-zinc-600 mt-1">
+                                💳 {order.paymentMethod || 'Cash on Delivery'}
+                              </p>
+                              {order.promoCode && (
+                                <span className="text-[10px] font-black text-[#FF5722] uppercase block">
+                                  Coupon: {order.promoCode} (-${order.discount?.toFixed(2)})
+                                </span>
+                              )}
                             </td>
 
                             {/* Status Badge */}

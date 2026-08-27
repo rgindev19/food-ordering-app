@@ -115,11 +115,42 @@ app.post('/api/foods', upload.single('imageFile'), async (req, res) => {
 // --- Order Endpoints ---
 app.post('/api/orders', async (req, res) => {
   try {
-    const { items, subtotal, deliveryFee, total } = req.body;
+    const { 
+      items, 
+      subtotal, 
+      deliveryFee, 
+      total, 
+      customerName, 
+      phone, 
+      deliveryAddress, 
+      paymentMethod, 
+      notes, 
+      promoCode, 
+      discount 
+    } = req.body;
+
     if (!items || items.length === 0) {
       return res.status(400).json({ error: 'Cart is empty' });
     }
-    const order = await Order.create({ items, subtotal, deliveryFee, total, status: 'Pending' });
+
+    const finalTotal = Number(total || (subtotal + deliveryFee - (discount || 0)));
+
+    const order = await Order.create({ 
+      items, 
+      subtotal: Number(subtotal), 
+      deliveryFee: Number(deliveryFee), 
+      total: finalTotal,
+      totalAmount: finalTotal,
+      customerName: customerName || 'Guest Foodie',
+      phone: phone || '',
+      deliveryAddress: deliveryAddress || { street: '', city: '', apt: '', zip: '' },
+      paymentMethod: paymentMethod || 'Cash on Delivery',
+      notes: notes || '',
+      promoCode: promoCode || '',
+      discount: Number(discount || 0),
+      status: 'Pending' 
+    });
+
     res.status(201).json({ success: true, order });
   } catch (err) {
     res.status(500).json({ error: err.message });

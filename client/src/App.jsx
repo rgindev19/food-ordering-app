@@ -22,6 +22,7 @@ import {
   Check
 } from 'lucide-react';
 import { useCartStore } from './store/useCartStore';
+import CheckoutPage from './components/CheckoutPage';
 import logoImg from './assets/logo (2).png';
 
 const CATEGORIES = ['All', 'Signature Bowls', 'Burgers', 'Pasta', 'Drinks', 'Desserts'];
@@ -39,14 +40,13 @@ const SPARKLE_COLORS = ['#FFE600', '#FF5722', '#22C55E', '#38BDF8', '#FF70A6', '
 const SPARKLE_ICONS = ['✨', '⭐', '💥', '🍕', '🍔', '💛'];
 
 export default function App() {
+  const [currentView, setCurrentView] = useState('menu'); // 'menu' | 'checkout'
   const [foods, setFoods] = useState([]);
   const [banners, setBanners] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [loading, setLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [search, setSearch] = useState('');
-  const [orderSuccess, setOrderSuccess] = useState(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Smooth Sparkle & Micro-Animation States
   const [sparkles, setSparkles] = useState([]);
@@ -54,7 +54,7 @@ export default function App() {
   const [isCartBouncing, setIsCartBouncing] = useState(false);
   const [recentlyAddedId, setRecentlyAddedId] = useState(null);
 
-  const { cart, isCartOpen, toggleCart, addToCart, updateQuantity, clearCart, getTotals } = useCartStore();
+  const { cart, isCartOpen, toggleCart, addToCart, updateQuantity, getTotals } = useCartStore();
 
   const totals = typeof getTotals === 'function' ? getTotals() : {
     subtotal: cart.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0),
@@ -116,16 +116,16 @@ export default function App() {
     const originX = rect.left + rect.width / 2;
     const originY = rect.top + rect.height / 2;
 
-    // Generate 8-10 bursting particles
+    // Generate 10 bursting particles
     const particleCount = 10;
     const newSparkles = [];
     const timestamp = Date.now();
 
     for (let i = 0; i < particleCount; i++) {
       const angle = (i / particleCount) * (2 * Math.PI) + (Math.random() * 0.4 - 0.2);
-      const distance = 45 + Math.random() * 55; // Spread distance in pixels
+      const distance = 45 + Math.random() * 55;
       const dx = `${Math.cos(angle) * distance}px`;
-      const dy = `${Math.sin(angle) * distance - 20}px`; // Slight upward drift
+      const dy = `${Math.sin(angle) * distance - 20}px`;
 
       newSparkles.push({
         id: `${timestamp}-${i}`,
@@ -150,39 +150,17 @@ export default function App() {
     };
     setFloatBadges((prev) => [...prev, newFloatBadge]);
 
-    // Clean up particles after animation completes
+    // Clean up particles after animation
     setTimeout(() => {
       setSparkles((prev) => prev.filter((p) => !newSparkles.some((ns) => ns.id === p.id)));
       setFloatBadges((prev) => prev.filter((b) => b.id !== newFloatBadge.id));
     }, 850);
   };
 
-  const handleCheckout = async () => {
-    if (cart.length === 0) return;
-    setIsSubmitting(true);
-    try {
-      const payload = {
-        items: cart.map((item) => ({
-          foodItem: item._id,
-          name: item.name,
-          price: item.price,
-          quantity: item.quantity
-        })),
-        subtotal,
-        deliveryFee: delivery,
-        total
-      };
-
-      const res = await axios.post('http://localhost:5000/api/orders', payload);
-      if (res.data.success) {
-        setOrderSuccess(res.data.order || { _id: 'NEW' + Date.now().toString().slice(-6), total });
-        clearCart();
-      }
-    } catch (err) {
-      alert('Order failed: ' + (err.response?.data?.error || err.message));
-    } finally {
-      setIsSubmitting(false);
-    }
+  const handleProceedToCheckout = () => {
+    if (isCartOpen) toggleCart();
+    setCurrentView('checkout');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const filteredItems = foods.filter((item) => {
@@ -192,6 +170,18 @@ export default function App() {
   });
 
   const cartTotalItems = cart.reduce((a, c) => a + c.quantity, 0);
+
+  // If in Checkout View, render CheckoutPage
+  if (currentView === 'checkout') {
+    return (
+      <CheckoutPage 
+        onBackToMenu={() => {
+          setCurrentView('menu');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }} 
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#FAF6EF] text-[#121212] flex flex-col font-sans selection:bg-[#FFE600] selection:text-black relative overflow-x-hidden">
@@ -244,8 +234,11 @@ export default function App() {
 
       {/* NAVIGATION HEADER */}
       <header className="sticky top-0 z-30 bg-[#FAF6EF]/95 backdrop-blur border-b-[3px] border-black px-4 sm:px-8 py-3.5 flex items-center justify-between shadow-[0_4px_0_#000]">
-        <div className="flex items-center gap-3">
-          <div className="bg-[#FFE600] border-[2.5px] border-black p-1.5 rounded-xl neo-shadow-xs flex items-center justify-center rotate-[-2deg] hover:rotate-0 transition-transform duration-200 cursor-pointer">
+        <div 
+          onClick={() => setCurrentView('menu')}
+          className="flex items-center gap-3 cursor-pointer"
+        >
+          <div className="bg-[#FFE600] border-[2.5px] border-black p-1.5 rounded-xl neo-shadow-xs flex items-center justify-center rotate-[-2deg] hover:rotate-0 transition-transform duration-200">
             <img 
               src={logoImg} 
               alt="SavorMERN" 
@@ -287,7 +280,7 @@ export default function App() {
           )}
         </div>
 
-        {/* Bag / Cart Button with Wiggle Animation */}
+        {/* Bag / Cart Button */}
         <div className="flex items-center gap-3">
           <button
             onClick={toggleCart}
@@ -624,26 +617,7 @@ export default function App() {
 
             {/* Drawer Body */}
             <div className="flex-1 overflow-y-auto p-5 space-y-3.5">
-              {orderSuccess ? (
-                <div className="h-full flex flex-col items-center justify-center text-center p-6 space-y-4 bg-white border-[3px] border-black rounded-2xl neo-shadow my-auto animate-in zoom-in-95 duration-200">
-                  <div className="w-16 h-16 bg-[#22C55E] text-black border-[3px] border-black rounded-2xl flex items-center justify-center neo-shadow">
-                    <CheckCircle2 className="w-10 h-10 stroke-[2.5]" />
-                  </div>
-                  <h3 className="text-2xl font-black neo-font-display text-black">Order Placed!</h3>
-                  <p className="text-xs font-bold text-zinc-600">
-                    The kitchen is firing up your order now.
-                  </p>
-                  <div className="bg-[#FAF6EF] border-2 border-black p-3 rounded-xl w-full text-xs font-mono font-bold text-black">
-                    Receipt ID: #{orderSuccess._id ? orderSuccess._id.slice(-6).toUpperCase() : 'REC778'}
-                  </div>
-                  <button
-                    onClick={() => { setOrderSuccess(null); toggleCart(); }}
-                    className="w-full py-3 bg-[#FFE600] text-black border-[2.5px] border-black rounded-xl font-black text-xs uppercase neo-btn"
-                  >
-                    Order More Dishes
-                  </button>
-                </div>
-              ) : cart.length === 0 ? (
+              {cart.length === 0 ? (
                 <div className="h-full flex flex-col items-center justify-center text-center p-8 text-zinc-500 space-y-3">
                   <div className="text-5xl">🛍️</div>
                   <h4 className="font-black text-lg text-black neo-font-display">Your bag is empty!</h4>
@@ -704,7 +678,7 @@ export default function App() {
             </div>
 
             {/* Checkout Receipt Summary */}
-            {cart.length > 0 && !orderSuccess && (
+            {cart.length > 0 && (
               <div className="p-5 border-t-[3px] border-black bg-white space-y-3 shadow-[0_-4px_0_#000]">
                 <div className="space-y-1.5 text-xs font-bold text-zinc-700">
                   <div className="flex justify-between">
@@ -732,18 +706,11 @@ export default function App() {
                 </div>
 
                 <button
-                  onClick={handleCheckout}
-                  disabled={isSubmitting}
-                  className="w-full mt-3 py-4 bg-[#FF5722] hover:bg-[#E64A19] disabled:opacity-50 text-white font-black text-base uppercase rounded-xl border-[3px] border-black neo-shadow hover:shadow-[6px_6px_0px_#000] active:shadow-[1px_1px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 transition flex items-center justify-center gap-2 cursor-pointer"
+                  onClick={handleProceedToCheckout}
+                  className="w-full mt-3 py-4 bg-[#FF5722] hover:bg-[#E64A19] text-white font-black text-base uppercase rounded-xl border-[3px] border-black neo-shadow hover:shadow-[6px_6px_0px_#000] active:shadow-[1px_1px_0px_#000] active:translate-x-0.5 active:translate-y-0.5 transition flex items-center justify-center gap-2 cursor-pointer"
                 >
-                  {isSubmitting ? (
-                    'Processing Order...'
-                  ) : (
-                    <>
-                      <span>Place Order Now</span>
-                      <ArrowRight className="w-5 h-5 stroke-[3]" />
-                    </>
-                  )}
+                  <span>Proceed to Checkout</span>
+                  <ArrowRight className="w-5 h-5 stroke-[3]" />
                 </button>
               </div>
             )}

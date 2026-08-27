@@ -40,13 +40,40 @@ const SPARKLE_COLORS = ['#FFE600', '#FF5722', '#22C55E', '#38BDF8', '#FF70A6', '
 const SPARKLE_ICONS = ['✨', '⭐', '💥', '🍕', '🍔', '💛'];
 
 export default function App() {
-  const [currentView, setCurrentView] = useState('menu'); // 'menu' | 'checkout'
-  const [foods, setFoods] = useState([]);
-  const [banners, setBanners] = useState([]);
+  // View State (Persisted in localStorage on load)
+  const [currentView, setCurrentView] = useState(() => {
+    return localStorage.getItem('savormern_current_view') || 'menu';
+  });
+
+  // Cached initial state on load
+  const [foods, setFoods] = useState(() => {
+    try {
+      const cached = localStorage.getItem('savormern_cached_foods');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [banners, setBanners] = useState(() => {
+    try {
+      const cached = localStorage.getItem('savormern_cached_banners');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+
   const [currentSlide, setCurrentSlide] = useState(0);
-  const [loading, setLoading] = useState(true);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [search, setSearch] = useState('');
+  const [loading, setLoading] = useState(() => foods.length === 0);
+  
+  const [selectedCategory, setSelectedCategory] = useState(() => {
+    return localStorage.getItem('savormern_selected_category') || 'All';
+  });
+
+  const [search, setSearch] = useState(() => {
+    return localStorage.getItem('savormern_search_query') || '';
+  });
 
   // Smooth Sparkle & Micro-Animation States
   const [sparkles, setSparkles] = useState([]);
@@ -70,19 +97,40 @@ export default function App() {
     return imageSrc;
   };
 
-  // Fetch Foods and Banners
+  // Persist current view, category, and search in localStorage
+  useEffect(() => {
+    localStorage.setItem('savormern_current_view', currentView);
+  }, [currentView]);
+
+  useEffect(() => {
+    localStorage.setItem('savormern_selected_category', selectedCategory);
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    localStorage.setItem('savormern_search_query', search);
+  }, [search]);
+
+  // Fetch Foods and Banners & Cache them in localStorage on Load
   useEffect(() => {
     const fetchData = async () => {
       try {
-        setLoading(true);
+        if (foods.length === 0) setLoading(true);
         const [foodsRes, bannersRes] = await Promise.all([
           axios.get('http://localhost:5000/api/foods'),
           axios.get('http://localhost:5000/api/banners')
         ]);
-        setFoods(foodsRes.data);
-        setBanners(bannersRes.data);
+        
+        if (Array.isArray(foodsRes.data)) {
+          setFoods(foodsRes.data);
+          localStorage.setItem('savormern_cached_foods', JSON.stringify(foodsRes.data));
+        }
+
+        if (Array.isArray(bannersRes.data)) {
+          setBanners(bannersRes.data);
+          localStorage.setItem('savormern_cached_banners', JSON.stringify(bannersRes.data));
+        }
       } catch (err) {
-        console.error('Failed to load initial data:', err);
+        console.error('Failed to load initial data from server:', err);
       } finally {
         setLoading(false);
       }
@@ -485,7 +533,7 @@ export default function App() {
         ) : filteredItems.length === 0 ? (
           <div className="text-center py-16 bg-white border-[3px] border-black rounded-2xl neo-shadow p-8 max-w-md mx-auto">
             <div className="text-4xl mb-3">🍽️</div>
-            <h3 className="font-black text-xl neo-font-display">No Dishes Found</h3>
+            <h3 className="font-black text-xl neo-font-display text-black">No Dishes Found</h3>
             <p className="text-xs font-semibold text-zinc-600 mt-1 mb-4">
               Try choosing another category or clearing your search query.
             </p>

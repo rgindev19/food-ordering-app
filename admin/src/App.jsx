@@ -34,21 +34,46 @@ const STATUS_CONFIG = {
 const CATEGORIES = ['Signature Bowls', 'Burgers', 'Pasta', 'Drinks', 'Desserts'];
 
 export default function AdminApp() {
-  const [activeTab, setActiveTab] = useState('orders'); // 'orders' | 'catalog' | 'promos'
+  const [activeTab, setActiveTab] = useState(() => {
+    return localStorage.getItem('savormern_admin_active_tab') || 'orders';
+  }); // 'orders' | 'catalog' | 'promos'
 
-  // Orders State
-  const [orders, setOrders] = useState([]);
-  const [loadingOrders, setLoadingOrders] = useState(true);
-  const [activeFilter, setActiveFilter] = useState('All');
+  // Orders State with cache on load
+  const [orders, setOrders] = useState(() => {
+    try {
+      const cached = localStorage.getItem('savormern_admin_cached_orders');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
+  const [loadingOrders, setLoadingOrders] = useState(() => orders.length === 0);
+  const [activeFilter, setActiveFilter] = useState(() => {
+    return localStorage.getItem('savormern_admin_active_filter') || 'All';
+  });
 
-  // Food Catalog State
-  const [foods, setFoods] = useState([]);
+  // Food Catalog State with cache on load
+  const [foods, setFoods] = useState(() => {
+    try {
+      const cached = localStorage.getItem('savormern_admin_cached_foods');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [loadingFoods, setLoadingFoods] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
 
-  // Add Product Form State
-  const [formData, setFormData] = useState({ name: '', category: 'Burgers', price: '', calories: '' });
+  // Add Product Form State with draft persistence on load
+  const [formData, setFormData] = useState(() => {
+    try {
+      const draft = localStorage.getItem('savormern_admin_dish_draft');
+      return draft ? JSON.parse(draft) : { name: '', category: 'Burgers', price: '', calories: '' };
+    } catch {
+      return { name: '', category: 'Burgers', price: '', calories: '' };
+    }
+  });
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
 
@@ -58,13 +83,44 @@ export default function AdminApp() {
   const [editImageFile, setEditImageFile] = useState(null);
   const [editImagePreview, setEditImagePreview] = useState('');
 
-  // Promo Banners State
-  const [banners, setBanners] = useState([]);
+  // Promo Banners State with cache on load and draft persistence on load
+  const [banners, setBanners] = useState(() => {
+    try {
+      const cached = localStorage.getItem('savormern_admin_cached_banners');
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [loadingBanners, setLoadingBanners] = useState(false);
-  const [bannerData, setBannerData] = useState({ title: '', subtitle: '' });
+  const [bannerData, setBannerData] = useState(() => {
+    try {
+      const draft = localStorage.getItem('savormern_admin_banner_draft');
+      return draft ? JSON.parse(draft) : { title: '', subtitle: '' };
+    } catch {
+      return { title: '', subtitle: '' };
+    }
+  });
   const [mediaFile, setMediaFile] = useState(null);
   const [mediaPreview, setMediaPreview] = useState('');
   const [mediaType, setMediaType] = useState('image');
+
+  // Auto-Save Tab, Filter, and Drafts in localStorage
+  useEffect(() => {
+    localStorage.setItem('savormern_admin_active_tab', activeTab);
+  }, [activeTab]);
+
+  useEffect(() => {
+    localStorage.setItem('savormern_admin_active_filter', activeFilter);
+  }, [activeFilter]);
+
+  useEffect(() => {
+    localStorage.setItem('savormern_admin_dish_draft', JSON.stringify(formData));
+  }, [formData]);
+
+  useEffect(() => {
+    localStorage.setItem('savormern_admin_banner_draft', JSON.stringify(bannerData));
+  }, [bannerData]);
 
   const getImageUrl = (imageSrc) => {
     if (!imageSrc) return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&auto=format&fit=crop&q=80';
@@ -75,9 +131,12 @@ export default function AdminApp() {
 
   const fetchOrders = async () => {
     try {
-      setLoadingOrders(true);
+      if (orders.length === 0) setLoadingOrders(true);
       const res = await axios.get(`${API_BASE}/api/orders`);
-      setOrders(res.data);
+      if (Array.isArray(res.data)) {
+        setOrders(res.data);
+        localStorage.setItem('savormern_admin_cached_orders', JSON.stringify(res.data));
+      }
     } catch (err) {
       console.error('Failed to load orders:', err);
     } finally {
@@ -87,9 +146,12 @@ export default function AdminApp() {
 
   const fetchFoods = async () => {
     try {
-      setLoadingFoods(true);
+      if (foods.length === 0) setLoadingFoods(true);
       const res = await axios.get(`${API_BASE}/api/foods`);
-      setFoods(res.data);
+      if (Array.isArray(res.data)) {
+        setFoods(res.data);
+        localStorage.setItem('savormern_admin_cached_foods', JSON.stringify(res.data));
+      }
     } catch (err) {
       console.error('Failed to load food items:', err);
     } finally {
@@ -99,9 +161,12 @@ export default function AdminApp() {
 
   const fetchBanners = async () => {
     try {
-      setLoadingBanners(true);
+      if (banners.length === 0) setLoadingBanners(true);
       const res = await axios.get(`${API_BASE}/api/banners`);
-      setBanners(res.data);
+      if (Array.isArray(res.data)) {
+        setBanners(res.data);
+        localStorage.setItem('savormern_admin_cached_banners', JSON.stringify(res.data));
+      }
     } catch (err) {
       console.error('Failed to load banners:', err);
     } finally {
@@ -148,7 +213,11 @@ export default function AdminApp() {
     try {
       const res = await axios.patch(`${API_BASE}/api/orders/${orderId}/status`, { status: newStatus });
       if (res.data.success) {
-        setOrders((prev) => prev.map((ord) => (ord._id === orderId ? { ...ord, status: newStatus } : ord)));
+        setOrders((prev) => {
+          const updated = prev.map((ord) => (ord._id === orderId ? { ...ord, status: newStatus } : ord));
+          localStorage.setItem('savormern_admin_cached_orders', JSON.stringify(updated));
+          return updated;
+        });
       }
     } catch (err) {
       alert('Failed to update status: ' + (err.response?.data?.error || err.message));
@@ -171,8 +240,13 @@ export default function AdminApp() {
 
       const res = await axios.post(`${API_BASE}/api/foods`, data);
       if (res.data.success) {
-        setFoods((prev) => [res.data.food, ...prev]);
+        setFoods((prev) => {
+          const updated = [res.data.food, ...prev];
+          localStorage.setItem('savormern_admin_cached_foods', JSON.stringify(updated));
+          return updated;
+        });
         setFormData({ name: '', category: 'Burgers', price: '', calories: '' });
+        localStorage.removeItem('savormern_admin_dish_draft');
         setImageFile(null);
         setImagePreview('');
         setSuccessMessage('Dish added successfully!');
@@ -205,7 +279,11 @@ export default function AdminApp() {
 
       const res = await axios.put(`${API_BASE}/api/foods/${editingProduct._id}`, data);
       if (res.data.success) {
-        setFoods((prev) => prev.map((f) => (f._id === editingProduct._id ? res.data.food : f)));
+        setFoods((prev) => {
+          const updated = prev.map((f) => (f._id === editingProduct._id ? res.data.food : f));
+          localStorage.setItem('savormern_admin_cached_foods', JSON.stringify(updated));
+          return updated;
+        });
         setEditingProduct(null);
         setSuccessMessage('Product updated successfully!');
         setTimeout(() => setSuccessMessage(''), 4000);
@@ -221,7 +299,13 @@ export default function AdminApp() {
     if (!window.confirm(`Delete "${name}" permanently?`)) return;
     try {
       const res = await axios.delete(`${API_BASE}/api/foods/${id}`);
-      if (res.data.success) setFoods((prev) => prev.filter((f) => f._id !== id));
+      if (res.data.success) {
+        setFoods((prev) => {
+          const updated = prev.filter((f) => f._id !== id);
+          localStorage.setItem('savormern_admin_cached_foods', JSON.stringify(updated));
+          return updated;
+        });
+      }
     } catch (err) {
       alert('Failed to delete product: ' + (err.response?.data?.error || err.message));
     }
@@ -241,8 +325,13 @@ export default function AdminApp() {
 
       const res = await axios.post(`${API_BASE}/api/banners`, data);
       if (res.data.success) {
-        setBanners((prev) => [res.data.banner, ...prev]);
+        setBanners((prev) => {
+          const updated = [res.data.banner, ...prev];
+          localStorage.setItem('savormern_admin_cached_banners', JSON.stringify(updated));
+          return updated;
+        });
         setBannerData({ title: '', subtitle: '' });
+        localStorage.removeItem('savormern_admin_banner_draft');
         setMediaFile(null);
         setMediaPreview('');
         setSuccessMessage('Promotional ad uploaded successfully!');
@@ -259,7 +348,13 @@ export default function AdminApp() {
     if (!window.confirm('Remove this promotional banner?')) return;
     try {
       const res = await axios.delete(`${API_BASE}/api/banners/${id}`);
-      if (res.data.success) setBanners((prev) => prev.filter((b) => b._id !== id));
+      if (res.data.success) {
+        setBanners((prev) => {
+          const updated = prev.filter((b) => b._id !== id);
+          localStorage.setItem('savormern_admin_cached_banners', JSON.stringify(updated));
+          return updated;
+        });
+      }
     } catch (err) {
       alert('Failed to delete banner: ' + (err.response?.data?.error || err.message));
     }

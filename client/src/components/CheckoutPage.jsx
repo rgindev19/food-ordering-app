@@ -1,5 +1,5 @@
 // client/src/components/CheckoutPage.jsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { 
   ArrowLeft, 
@@ -37,29 +37,103 @@ const PROMO_CODES = {
 export default function CheckoutPage({ onBackToMenu }) {
   const { cart, updateQuantity, clearCart } = useCartStore();
 
-  // Form State
-  const [formData, setFormData] = useState({
-    fullName: '',
-    phone: '',
-    street: '',
-    apt: '',
-    city: '',
-    zip: '',
-    notes: ''
+  // Load Saved Form State from localStorage on Mount
+  const [formData, setFormData] = useState(() => {
+    try {
+      const saved = localStorage.getItem('savormern_checkout_form');
+      return saved ? JSON.parse(saved) : {
+        fullName: '',
+        phone: '',
+        street: '',
+        apt: '',
+        city: '',
+        zip: '',
+        notes: ''
+      };
+    } catch {
+      return { fullName: '', phone: '', street: '', apt: '', city: '', zip: '', notes: '' };
+    }
   });
 
-  const [paymentMethod, setPaymentMethod] = useState('COD'); // 'COD' | 'CARD' | 'WALLET'
+  const [paymentMethod, setPaymentMethod] = useState(() => {
+    return localStorage.getItem('savormern_payment_method') || 'COD';
+  });
+
   const [cardData, setCardData] = useState({ number: '', expiry: '', cvv: '' });
-  const [walletProvider, setWalletProvider] = useState('GCash'); // 'GCash' | 'ApplePay' | 'GooglePay'
-  const [includeUtensils, setIncludeUtensils] = useState(true);
-  const [contactless, setContactless] = useState(false);
+  
+  const [walletProvider, setWalletProvider] = useState(() => {
+    return localStorage.getItem('savormern_wallet_provider') || 'GCash';
+  });
+
+  const [includeUtensils, setIncludeUtensils] = useState(() => {
+    const saved = localStorage.getItem('savormern_include_utensils');
+    return saved !== null ? JSON.parse(saved) : true;
+  });
+
+  const [contactless, setContactless] = useState(() => {
+    const saved = localStorage.getItem('savormern_contactless');
+    return saved !== null ? JSON.parse(saved) : false;
+  });
 
   // Promo Code State
   const [promoInput, setPromoInput] = useState('');
-  const [appliedPromo, setAppliedPromo] = useState(null);
+  const [appliedPromo, setAppliedPromo] = useState(() => {
+    try {
+      const saved = localStorage.getItem('savormern_applied_promo');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
   const [promoError, setPromoError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [placedOrder, setPlacedOrder] = useState(null);
+
+  // Active Placed Order Persistence (so reload keeps tracking view active)
+  const [placedOrder, setPlacedOrder] = useState(() => {
+    try {
+      const saved = localStorage.getItem('savormern_active_order');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
+
+  // Auto-Save Form Data to localStorage on Change
+  useEffect(() => {
+    localStorage.setItem('savormern_checkout_form', JSON.stringify(formData));
+  }, [formData]);
+
+  useEffect(() => {
+    localStorage.setItem('savormern_payment_method', paymentMethod);
+  }, [paymentMethod]);
+
+  useEffect(() => {
+    localStorage.setItem('savormern_wallet_provider', walletProvider);
+  }, [walletProvider]);
+
+  useEffect(() => {
+    localStorage.setItem('savormern_include_utensils', JSON.stringify(includeUtensils));
+  }, [includeUtensils]);
+
+  useEffect(() => {
+    localStorage.setItem('savormern_contactless', JSON.stringify(contactless));
+  }, [contactless]);
+
+  useEffect(() => {
+    if (appliedPromo) {
+      localStorage.setItem('savormern_applied_promo', JSON.stringify(appliedPromo));
+    } else {
+      localStorage.removeItem('savormern_applied_promo');
+    }
+  }, [appliedPromo]);
+
+  useEffect(() => {
+    if (placedOrder) {
+      localStorage.setItem('savormern_active_order', JSON.stringify(placedOrder));
+    } else {
+      localStorage.removeItem('savormern_active_order');
+    }
+  }, [placedOrder]);
 
   // Calculate Subtotal & Delivery
   const subtotal = cart.reduce((sum, item) => sum + (item.price || 0) * (item.quantity || 1), 0);
@@ -107,6 +181,12 @@ export default function CheckoutPage({ onBackToMenu }) {
     setPromoError('');
   };
 
+  const handleClearOrderAndReturn = () => {
+    setPlacedOrder(null);
+    localStorage.removeItem('savormern_active_order');
+    onBackToMenu();
+  };
+
   const handleSubmitOrder = async (e) => {
     e.preventDefault();
     if (cart.length === 0) return alert('Your cart is empty.');
@@ -150,7 +230,9 @@ export default function CheckoutPage({ onBackToMenu }) {
 
       const res = await axios.post('http://localhost:5000/api/orders', payload);
       if (res.data.success) {
-        setPlacedOrder(res.data.order || { ...payload, _id: 'ORD' + Date.now().toString().slice(-6) });
+        const orderData = res.data.order || { ...payload, _id: 'ORD' + Date.now().toString().slice(-6) };
+        setPlacedOrder(orderData);
+        localStorage.setItem('savormern_active_order', JSON.stringify(orderData));
         clearCart();
       }
     } catch (err) {
@@ -281,7 +363,7 @@ export default function CheckoutPage({ onBackToMenu }) {
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-3">
             <button
-              onClick={onBackToMenu}
+              onClick={handleClearOrderAndReturn}
               className="flex-1 py-4 bg-[#FFE600] hover:bg-[#FFD500] text-black font-black text-sm uppercase rounded-2xl border-[3px] border-black neo-btn text-center cursor-pointer"
             >
               Order More Crave Food 🍔
@@ -311,7 +393,7 @@ export default function CheckoutPage({ onBackToMenu }) {
             <h1 className="text-xl sm:text-2xl font-black text-black neo-font-display uppercase tracking-tight">
               Express Checkout 🚀
             </h1>
-            <p className="text-xs font-bold text-zinc-600">Fresh & Fast Kitchen Dispatch</p>
+            <p className="text-xs font-bold text-zinc-600">Draft automatically saved on load</p>
           </div>
         </div>
 
